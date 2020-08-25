@@ -32,7 +32,6 @@ struct node {
 
 struct result {
   u32string word;
-  double ratio;
   unsigned int edit_dist;
 };
 
@@ -41,15 +40,19 @@ struct result {
 class Trie {
 
     node * root;
-    double max_ratio;
+    /*
     int ins;
     int del;
     int rep;
+    */
   public:
     vector<result> results;
 
+    /*
     Trie( int insert = 1, int delet = 1, int replace = 1)
         : ins(insert),del(delet),rep(replace)
+        */
+    Trie()
     {
       root = new node;
     }
@@ -92,6 +95,7 @@ class Trie {
       uint16_t row_min = UINT16_MAX;
 
       for ( uint16_t i = 1; i < columns; ++i ) {
+        /*
         uint16_t insert_cost = cur_row [i - 1] + ins;
         uint16_t delete_cost = prev_row [i] + del;
 
@@ -99,6 +103,16 @@ class Trie {
 
         if (word [i - 1] != letter )
             replace_cost = prev_row [i - 1] + rep;
+        else                
+            replace_cost = prev_row [i - 1];
+        */
+        uint16_t insert_cost = cur_row [i - 1] + 1;
+        uint16_t delete_cost = prev_row [i] + 1;
+
+        uint16_t replace_cost;
+
+        if (word [i - 1] != letter )
+            replace_cost = prev_row [i - 1] + 2;
         else                
             replace_cost = prev_row [i - 1];
 	
@@ -111,21 +125,15 @@ class Trie {
 				cur_row . push_back ( edit_min );
       }
 
-      double cur_ratio = (double)cur_row.back() / max( (uint16_t)word . length (), (uint16_t) cur_row [0] );
-
       if ( cur_row.back() <= max_cost && 
-         ! cur_node -> word . empty() && 
-           cur_ratio <= max_ratio ) {
+         ! cur_node -> word . empty() ) {
         result res;
         res . word = cur_node -> word; 
         res . edit_dist = cur_row.back();
-        res . ratio = cur_ratio;
         results . push_back ( res );
       }
 
-      double min_ratio = (double)row_min / max( (uint16_t)word . length (), (uint16_t) cur_row [0] );
-
-			if ( row_min <= max_cost && min_ratio <= max_ratio ) {
+			if ( row_min <= max_cost ) {
 					for ( pair<char32_t,node*> child : cur_node -> children ) {
 							this->search_recur ( child . second, 
                                    child . first,
@@ -138,8 +146,7 @@ class Trie {
 
     }
 
-    void search ( u32string word, unsigned int max_cost, double max_ratio) {
-      this -> max_ratio = max_ratio;
+    void search ( u32string word, unsigned int max_cost) {
       results.clear();
       // jak k tomu pristupovat
       
@@ -219,7 +226,8 @@ int main () {
         words.push_back(converter.from_bytes(str));
   }
 
-  Trie t(1,1,1);
+  //Trie t(1,1,2);
+  Trie t;
 
   for ( const auto & w: words ) {
     t . insert ( w );
@@ -228,7 +236,7 @@ int main () {
   //t.traverse();
   
   for ( const auto & word : words ) {
-    t. search ( word, 2 , 0.2 );
+    t. search ( word, 2 );
   
     cout << converter . to_bytes ( word ) 
          << ":" 
@@ -238,8 +246,6 @@ int main () {
       cout << converter . to_bytes(r . word )
            << " " 
            << r . edit_dist 
-           << " " 
-           << r . ratio
            << endl; 
     }
     cout << endl;
