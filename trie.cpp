@@ -2,14 +2,9 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include <pair>
 
 using namespace std;
 
-struct node {
-  int value;
-  vector<pair<char,*node>> children;
-};
 
 static PyObject * build(PyObject* self, PyObject* args )
 {

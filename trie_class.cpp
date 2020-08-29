@@ -1,3 +1,4 @@
+#include <Python.h>
 #include <string>
 #include <codecvt>
 #include <locale>
@@ -11,6 +12,8 @@
 #include <utility>
 #include <fstream>
 #include <iterator>
+
+typedef int Py_ssize_t;
 
 using namespace std;
 
@@ -205,6 +208,90 @@ class Trie {
     }
 };
 
+
+static PyObject * build ( PyObject * self, PyObject * args ) 
+{
+
+  Trie t(1,1,1);
+
+  PyObject * list;
+  if ( ! PyArg_ParseTuple( args, "O", &list ) )
+    return NULL;
+
+  PyObject * iter = PyObject_GetIter(list);
+
+  if ( ! iter )
+    return NULL;
+
+  PyObject * next_item = NULL;
+  PyObject * s = NULL;
+
+  vector<u32string> words;
+  wstring_convert<codecvt_utf8<char32_t>, char32_t> converter;
+
+  while ( 1 ) {
+    next_item = PyIter_Next(iter);
+
+    if ( ! next_item )
+      break;
+
+    if( PyUnicode_Check( next_item ) ) 
+      s = PyUnicode_AsUTF8String( next_item );
+
+    u32string str;
+    if(s) {
+      str = converter.from_bytes(PyBytes_AsString(s));
+      Py_XDECREF(s);
+    }
+
+    // instead of this put the string into trie
+    
+    t     . insert    ( str );
+    words . push_back ( str );
+  }
+
+
+  PyObject * dick = PyDict_New();
+  if ( ! dick ) {
+    // you are a woman ( probabbly )
+    return NULL;
+  }
+
+
+
+  for ( const auto & word : words ) {
+    t. search ( word, 2 , 0.2 );
+    t . results; // to an PyList
+    PyObject * list = PyList_New( t.results.length() ) ;
+
+    PyObject * tup = PyTuple_New( 3 );
+    for ( const auto & r : t . results ) {
+      // TOUPLE instead
+      tup . 
+      cout << converter . to_bytes( r . word )
+           << " " 
+           << r . edit_dist 
+           << " " 
+           << r . ratio
+           << endl; 
+    }
+
+    PyList_SetItem(PyObject *list, Py_ssize_t index, PyObject *item) 
+    // TODO: maybe  word has to be converted back to byte char representation
+    // because the function wantsch const char * not const char32 *
+    PyDict_SetItemString( dick, word, )
+  
+  }
+}
+
+static PyObject * version ( PyObject * self )
+{
+  return Py_BuildValue("s", "Version 1.0");
+}
+
+
+
+/*
 int main () {
 
   vector<u32string> words;
@@ -245,3 +332,4 @@ int main () {
     cout << endl;
   }
 }
+*/
